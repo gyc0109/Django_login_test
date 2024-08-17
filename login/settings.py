@@ -85,7 +85,7 @@ WSGI_APPLICATION = "login.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'login',  # 数据库名字
+        'NAME': 'loginDjango',  # 数据库名字
         'USER': 'root',
         'PASSWORD': '1452128068*Gyc',
         'HOST': '127.0.0.1',  # 那台机器安装了MySQL
@@ -116,7 +116,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+# 修改代码，让Django支持中文
+# LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "zh-hans"
 
 TIME_ZONE = "UTC"
 

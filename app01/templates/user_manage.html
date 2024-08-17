@@ -1,0 +1,196 @@
+{% extends "layout/basic.html" %}
+
+{% block title %}用户管理{% endblock %}
+
+{% block content %}
+    <div class="container" style="margin-bottom: 8px">
+        <input id="btnAdd" type="button" value="新建用户" class="btn btn-primary">
+    </div>
+
+    <div class="container">
+        <div class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+                用户列表
+            </div>
+
+            <!-- Table -->
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>密码</th>
+                    <th>重置密码</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in queryset %}
+                    <tr uid="{{ obj.id }}">
+                        <th>{{ obj.id }}</th>
+                        <td>{{ obj.username }}</td>
+                        <td>*******</td>
+                        <td>
+                            <a href="/admin/{{ obj.id }}/reset/">重置密码</a>
+                        </td>
+                        <td>
+                            <a class="btn btn-primary btn-xs" href="/admin/{{ obj.id }}/edit/">编辑</a>
+                            <input uid="{{ obj.id }}" type="button"
+                                   class="btn btn-danger btn-xs btn-delete" value="删 除">
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+
+    <!-- 新建用户对话框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">新建用户</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="formAdd" novalidate>
+                        {% for field in form %}
+                            <div class="form-group" style="position: relative; margin-bottom: 30px">
+                                <label>{{ field.label }}</label>
+                                {{ field }}
+                                <span class="error-massage" style="color: red; position: absolute;"></span>
+                            </div>
+                        {% endfor %}
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关 闭</button>
+                <button id="btnSave" type="button" class="btn btn-primary">保 存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除用户对话框 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <h4>是否确定要删除此用户？</h4>
+                <p style="text-align: right">
+                    <button id="btnConfirmDelete" type="button" class="btn btn-danger">确 认</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        var DELETE_ID;
+
+        $(function () {
+            bindBtnAddEvent();
+            bindBtnSaveEvent();
+            bindBtnDeleteEvent();
+            bindBtnConfirmDeleteEvent();
+        })
+
+        function bindBtnAddEvent() {
+            $("#btnAdd").click(function () {
+                // 点击按钮后, 显示对话框
+                $('#myModal').modal('show');
+            });
+        }
+
+        function bindBtnSaveEvent() {
+            $('#btnSave').click(function () {
+                // 清除错误信息
+                $(".error-massage").empty()
+
+                $.ajax({
+                    url: "/user/add/",
+                    type: "post",
+                    data: $("#formAdd").serialize(),
+                    dataType: "JSON",
+                    success: function (res) {
+                        console.log(res);
+                        console.log(res.error);
+                        if (res.status) {
+                            // 清空表单
+                            $("#formAdd")[0].reset();
+
+                            // 关闭对话框
+                            $('#myModal').modal('hide');
+
+                            // 重新刷新页面
+                            location.reload();
+
+                        } else {
+                            // 将错误信息显示到对应的位置
+                            $.each(res.error, function (name, errorList) {
+                                $("#id_" + name).next().text(errorList[0])
+                            })
+                        }
+                    }
+                })
+            });
+        }
+
+        function bindBtnDeleteEvent() {
+            $(".btn-delete").click(function () {
+                // alert("点击了删除按钮");
+                // 显示了删除对话框
+                $('#deleteModal').modal('show');
+
+                // 获取要删除的用户ID, 并保存到全局变量中
+                DELETE_ID = $(this).attr("uid");
+            })
+        }
+
+        function bindBtnConfirmDeleteEvent() {
+            $("#btnConfirmDelete").click(function () {
+                // alert("点击了确认删除按钮");
+                // 发送ajax请求
+                console.log(DELETE_ID)
+                $.ajax({
+                    url: "/user/delete/",
+                    type: "GET",
+                    data: {
+                        uid: DELETE_ID
+                    },
+                    dataType: "JSON",
+                    success: function (res) {
+                        console.log(res);
+                        if (res.status) {
+                            // 关闭对话框
+                            // $('#deleteModal').modal('hide');
+
+                            // 在页面上删除对应的行
+                            // $("tr[uid = '" + DELETE_ID + "']").remove();
+
+                            // 置空全局变量
+                            // DELETE_ID = null;
+
+                            // 重新刷新页面
+                            location.reload();
+                        } else {
+                            // 弹出提示框
+                            alert(res.error);
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}
